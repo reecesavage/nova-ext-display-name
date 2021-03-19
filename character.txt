@@ -1,0 +1,52 @@
+
+	public function get_character_name($character = '', $showRank = false, $showShortRank = false, $showBioLink = false)
+	{
+		$this->db->from('characters');
+		
+		if ($showRank === true)
+		{
+			$this->db->join('ranks_'.GENRE, 'ranks_'.GENRE .'.rank_id = characters.rank');
+		}
+		
+		$this->db->where('charid', $character);
+		
+		$query = $this->db->get();
+		
+		if ($query->num_rows() > 0)
+		{
+			$item = $query->row();
+		
+			$array['rank'] = ($showRank === true) ? $item->rank_name : false;
+			$array['rank'] = ($showShortRank === true) ? $item->rank_short_name : $array['rank'];
+			
+			if(!empty($item->display_name))
+			{
+				$array['display_name'] = $item->display_name;
+			}else {
+			$array['first_name'] = $item->first_name;
+			$array['last_name'] = $item->last_name;
+			$array['suffix'] = $item->suffix;
+			}
+		    
+		    
+			foreach ($array as $key => $value)
+			{
+				if (empty($value))
+				{
+					unset($array[$key]);
+				}
+			}
+		
+			$string = implode(' ', $array);
+
+			if ($showBioLink === true)
+			{
+				return anchor('personnel/character/'.$item->charid, $string);
+			}
+		
+			return $string;
+		}
+		
+		return false;
+	}
+}

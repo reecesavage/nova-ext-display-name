@@ -19,6 +19,7 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
     public function getQuery($switch)
     {
 
+        switch ($switch)
         {
             case 'display_name':
                 $sql = "ALTER TABLE nova_characters ADD COLUMN display_name VARCHAR(255) DEFAULT NULL";
@@ -114,7 +115,7 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
     {    
          $data['write']=true;
           Auth::check_access('site/settings');
-        $data['title'] = 'Display Name Settings';
+        $data['title'] = 'Display Setting';
         $requiredCharacterFields['char'] = ['display_name'];
 
 
@@ -228,7 +229,7 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
         }
        
         $data['fields'] = $leftFields;
-        $this->_regions['title'] .= 'Display Name Settings';
+        $this->_regions['title'] .= 'Display Setting';
         $this->_regions['content'] = $this->extension['nova_ext_display_name']
             ->view('config', $this->skin, 'admin', $data);
 

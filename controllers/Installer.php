@@ -48,11 +48,11 @@ function __construct() {
       // Add item
   
      
-      $query = $this->ci->db->get_where('menu_items', array('menu_name' => 'Display Name'));
+      $query = $this->ci->db->get_where('menu_items', array('menu_name' => 'Display Setting'));
     $item = ($query->num_rows() > 0) ? $query->row() : false;   
       if($item==false){
       $insertItem = $this->ci->menu_model->add_menu_item( [
-        'menu_name' => 'Display Name',
+        'menu_name' => 'Display Setting',
         'menu_group' => 0,
         'menu_order' => 0,
         'menu_sim_type' => 1,

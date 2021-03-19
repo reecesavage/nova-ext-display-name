@@ -3,6 +3,22 @@
 
 $this->event->listen(['location', 'view', 'data', 'main', 'main_join_2'], function($event){
 
+
+
+  $extConfigFilePath = dirname(__FILE__).'/../config.json';
+         
+        if ( file_exists( $extConfigFilePath ) ) { 
+            $file = file_get_contents( $extConfigFilePath );
+            $json = json_decode( $file, true );
+    }
+
+
+      $displayLabel = isset($json['nova_ext_display_name']['display_name'])
+                        ? $json['nova_ext_display_name']['display_name']['value']
+                        : 'Display Name';
+
+
+     $event['data']['label']['nova_ext_display_name'] = $displayLabel;
       $event['data']['inputs']['nova_ext_display_name'] = array(
         'name' => 'display_name',
         'id' => 'nova_ext_display_name',

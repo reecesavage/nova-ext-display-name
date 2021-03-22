@@ -29,12 +29,24 @@ $this->event->listen(['location', 'view', 'data', 'admin', 'characters_index'], 
 			foreach ($all->result() as $a)
 			{
 				if ($a->crew_type != 'npc')
-				{
-					$name = array(
+				{   
+
+					if(!empty($a->display_name))
+					{
+                         $name = array(
 						($a->crew_type != 'pending') ? $this->ranks->get_rank($a->rank, 'rank_name') : '',
 						$a->display_name
 
 					);
+					}else {
+						$name = array(
+						($a->crew_type != 'pending') ? $this->ranks->get_rank($a->rank, 'rank_name') : '',
+						$a->first_name,
+						$a->last_name,
+						$a->suffix
+					);
+					}
+					
 					
 					$pos = $this->pos->get_position($a->position_1);
 					

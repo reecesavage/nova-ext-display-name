@@ -7,7 +7,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-red.svg"></a>
 </p>
 
-This extension allows characters to use a Display Name as an alternative to the First Name, Last Name, Suffix that is default in Nova. If Display Name is blank the default method will be displayed.
+This extension allows characters to use a Display Name as an alternative to the First Name, Last Name, Suffix which is default in Nova. If Display Name is blank the default method will be displayed.
 
 This extension requires:
 

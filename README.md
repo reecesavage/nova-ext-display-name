@@ -25,7 +25,7 @@ $config['extensions']['enabled'][] = 'nova_ext_display_name';
 - Navigate to your Admin Control Panel
 - Choose Display Name under Manage Extensions
 - Create Database Columns by clicking "Create Column" for each column. Once all columns are added the message "All expected columns found in the database" will appear.
-- Click Update Controller Information to add the `get_character_name` function to your `application/controllers/characters.php` file.
+- Click Update Controller Information to add the `get_character_name` function to your `application/models/characters_model.php` file.
 
 Installation is now complete!
 
@@ -37,7 +37,7 @@ Installation is now complete!
 ALTER TABLE nova_characters ADD COLUMN display_name VARCHAR(255) DEFAULT NULL;
 ```
 
-- Add the following function in your `applications/controllers/characters.php` file to overwrite `get_character_name` function.
+- Add the following function in your `applications/models/characters_model.php` file to overwrite `get_character_name` function.
 
 ```
 	public function get_character_name($character = '', $showRank = false, $showShortRank = false, $showBioLink = false)

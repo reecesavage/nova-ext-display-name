@@ -1,0 +1,18 @@
+{
+	"name": "Display Name",
+	"version": "1.0.0",
+	"description": "This extension allows characters to use a Display Name as an alternative to the First Name, Last Name, Suffix which is default in Nova. If Display Name is blank the default method will be displayed.",
+	"url": "https://github.com/reecesavage/nova-ext-display-name",
+	"author": {
+		"name": "Sim Central",
+		"email": "info@simcentral.org",
+		"url": "https://simcentral.org"
+	},
+	"folder": "nova_ext_display_name",
+	"requiredExtensions": [
+	],
+	"configFiles": [
+		
+	],
+	"upgradeable": "yes"
+}

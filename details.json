@@ -12,7 +12,9 @@
 	"requiredExtensions": [
 	],
 	"configFiles": [
-		
+		"init.php",
+		"events/db.php"
 	],
-	"upgradeable": "yes"
+	"upgradeable": "yes",
+	"replaceConfigFiles":"yes"
 }

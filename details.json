@@ -19,5 +19,11 @@
 	"replaceConfigFiles":"yes",
 	"incompatibleExtensions":[ 
             
+	],
+	"uninstall":[ 
+		 
+          "application/models/characters_model.php"  
 	]
+
+	
 }

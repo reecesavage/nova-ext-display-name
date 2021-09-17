@@ -18,11 +18,16 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
 
     public function getQuery($switch)
     {
+       $prefix= $this->db->dbprefix;
 
+             
         switch ($switch)
-        {
+        {   
+
+
+
             case 'display_name':
-                $sql = "ALTER TABLE nova_characters ADD COLUMN display_name VARCHAR(255) DEFAULT NULL";
+                $sql = "ALTER TABLE {$prefix}characters ADD COLUMN display_name VARCHAR(255) DEFAULT NULL";
             break;
 
           

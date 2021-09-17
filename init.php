@@ -1,4 +1,6 @@
 <?php 
+
+// check 
 require_once dirname(__FILE__) . '/controllers/Installer.php';
 $manager = ( new \nova_ext_display_name\Installer() )->install();
 

@@ -1,9 +1,9 @@
 # Display Name - A [Nova](https://anodyne-productions.com/nova) Extension
 
 <p align="center">
-  <a href="https://github.com/reecesavage/nova-ext-display-name/releases/tag/v1.0.1"><img src="https://img.shields.io/badge/Version-v1.0.1-brightgreen.svg"></a>
-  <a href="http://www.anodyne-productions.com/nova"><img src="https://img.shields.io/badge/Nova-v2.6+-orange.svg"></a>
-  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP-v5.3.0-blue.svg"></a>
+  <a href="https://github.com/reecesavage/nova-ext-display-name/releases/tag/v1.1.0"><img src="https://img.shields.io/badge/Version-v1.1.0-brightgreen.svg"></a>
+  <a href="http://www.anodyne-productions.com/nova"><img src="https://img.shields.io/badge/Nova-v2.7.5+-orange.svg"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP-v8.x-blue.svg"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-red.svg"></a>
 </p>
 
@@ -11,7 +11,12 @@ This extension allows characters to use a Display Name as an alternative to the 
 
 This extension requires:
 
-- Nova 2.6+
+- Nova 2.7.5+
+
+## Upgrade Considerations
+- If upgrading Nova 2.6+ with this Nove Extension already deployed:
+- Remove `$config['extensions']['enabled'][] = 'nova_ext_display_name';` from `application/config/extensions.php` prior to the Nova upgrade.
+- After upgrading Nova to 2.7.5+, follow the installation steps below. The database tables still contain your data
 
 ## Installation
 
@@ -29,71 +34,6 @@ $config['extensions']['enabled'][] = 'nova_ext_display_name';
 
 Installation is now complete!
 
-### Manual Setup - If not using the method above.
-
-- Run the following commands on your MySQL database:
-
-```
-ALTER TABLE nova_characters ADD COLUMN display_name VARCHAR(255) DEFAULT NULL;
-```
-
-- Add the following function in your `applications/models/characters_model.php` file to overwrite `get_character_name` function.
-
-```
-	public function get_character_name($character = '', $showRank = false, $showShortRank = false, $showBioLink = false)
-	{
-		$this->db->from('characters');
-		
-		if ($showRank === true)
-		{
-			$this->db->join('ranks_'.GENRE, 'ranks_'.GENRE .'.rank_id = characters.rank');
-		}
-		
-		$this->db->where('charid', $character);
-		
-		$query = $this->db->get();
-		
-		if ($query->num_rows() > 0)
-		{
-			$item = $query->row();
-		
-			$array['rank'] = ($showRank === true) ? $item->rank_name : false;
-			$array['rank'] = ($showShortRank === true) ? $item->rank_short_name : $array['rank'];
-			
-			if(!empty($item->display_name))
-			{
-				$array['display_name'] = $item->display_name;
-			}else {
-			$array['first_name'] = $item->first_name;
-			$array['last_name'] = $item->last_name;
-			$array['suffix'] = $item->suffix;
-			}
-		    
-		    
-			foreach ($array as $key => $value)
-			{
-				if (empty($value))
-				{
-					unset($array[$key]);
-				}
-			}
-		
-			$string = implode(' ', $array);
-
-			if ($showBioLink === true)
-			{
-				return anchor('personnel/character/'.$item->charid, $string);
-			}
-		
-			return $string;
-		}
-		
-		return false;
-	}
-}
-```
-Installation is now complete! 
-
 ## Usage
 
 - Create or Edit a character.
@@ -108,6 +48,6 @@ If you encounter a bug or have a feature request, please report it on GitHub in 
 
 ## License
 
-Copyright (c) 2021 Reece Savage.
+Copyright (c) 2023 Reece Savage.
 
 This module is open-source software licensed under the **MIT License**. The full text of the license may be found in the `LICENSE` file.

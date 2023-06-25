@@ -1,11 +1,10 @@
-
 	public function get_character_name($character = '', $showRank = false, $showShortRank = false, $showBioLink = false)
 	{
 		$this->db->from('characters');
 		
 		if ($showRank === true)
 		{
-			$this->db->join('ranks_'.GENRE, 'ranks_'.GENRE .'.rank_id = characters.rank');
+			$this->db->join('ranks', 'ranks'.'.rank_id = characters.rank');
 		}
 		
 		$this->db->where('charid', $character);

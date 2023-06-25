@@ -41,7 +41,7 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
      public function writeModelCode()
   {   
           
-         $extModelPath = APPPATH.'models/characters_model.php';
+         $extModelPath = APPPATH.'models/Characters_model.php';
         if ( !file_exists( $extModelPath ) ) { 
         return [];
         }
@@ -126,7 +126,7 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
 
 
        
-        $extModelPath = APPPATH.'models/characters_model.php';
+        $extModelPath = APPPATH.'models/Characters_model.php';
          
         if ( !file_exists( $extModelPath ) ) { 
         return [];

@@ -80,7 +80,7 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
 
             if (in_array($attr, $requiredCharacterFields['char']) == true)
             {
-                $table = "nova_characters";
+                $table = "characters";
 
             }
             if (!empty($table))
@@ -221,7 +221,7 @@ class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
 
         $charFields = $this
             ->db
-            ->list_fields('nova_characters');
+            ->list_fields('characters');
        
 
         $leftFields = [];

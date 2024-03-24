@@ -1,7 +1,7 @@
 # Display Name - A [Nova](https://anodyne-productions.com/nova) Extension
 
 <p align="center">
-  <a href="https://github.com/reecesavage/nova-ext-display-name/releases/tag/v1.1.0"><img src="https://img.shields.io/badge/Version-v1.1.0-brightgreen.svg"></a>
+  <a href="https://github.com/reecesavage/nova-ext-display-name/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/Version-v1.1.0-brightgreen.svg"></a>
   <a href="http://www.anodyne-productions.com/nova"><img src="https://img.shields.io/badge/Nova-v2.7.5+-orange.svg"></a>
   <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP-v8.x-blue.svg"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-red.svg"></a>
@@ -12,6 +12,7 @@ This extension allows characters to use a Display Name as an alternative to the 
 This extension requires:
 
 - Nova 2.7.5+
+- Nova Extension [`jquery`](https://github.com/jonmatterson/nova-ext-jquery)
 
 ## Upgrade Considerations
 - If upgrading Nova 2.6+ with this Nove Extension already deployed:

@@ -1,245 +1,355 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-require_once MODPATH . 'core/libraries/Nova_controller_admin.php';
+require_once MODPATH.'core/libraries/Nova_controller_admin.php';
 
 class __extensions__nova_ext_display_name__Manage extends Nova_controller_admin
 {
-    public function __construct()
-    {
-        parent::__construct();
+	private $required_character_columns = array(
+		'display_name',
+	);
 
-        $this->ci = & get_instance();
-        $this->_regions['nav_sub'] = Menu::build('adminsub', 'manageext');
-        //$this->_regions['nav_sub'] = Menu::build('sub', 'sim');
-        
+	public function __construct()
+	{
+		parent::__construct();
 
-        
-    }
+		$this->ci =& get_instance();
+		$this->_regions['nav_sub'] = Menu::build('adminsub', 'manageext');
+	}
 
-    public function getQuery($switch)
-    {
-       $prefix= $this->db->dbprefix;
+	public function config()
+	{
+		Auth::check_access('site/settings');
 
-             
-        switch ($switch)
-        {   
+		$configPath = dirname(__FILE__).'/../config.json';
 
+		// --- handle POST actions ---
+		$action = isset($_POST['action']) ? $_POST['action'] : '';
 
+		if ($action === 'setup_database') {
+			$this->_flash($this->_setupDatabase());
+		} elseif ($action === 'install_character') {
+			$this->_flash($this->_writeControllerBlock('character'));
+		} elseif ($action === 'save_labels') {
+			$this->_flash($this->_saveLabels($configPath));
+		}
 
-            case 'display_name':
-                $sql = "ALTER TABLE {$prefix}characters ADD COLUMN display_name VARCHAR(255) DEFAULT NULL";
-            break;
+		// --- build view data ---
+		$data = array();
+		$data['title'] = 'Display Name - Configuration';
+		$data['jsons'] = json_decode(file_get_contents($configPath), true);
 
-          
+		$data['missing_columns'] = $this->_missingColumns();
+		$data['db_ready'] = empty($data['missing_columns']);
 
-            default:
-            break;
-        }
-        return isset($sql) ? $sql : '';
-    }
+		$data['character_state'] = $this->_controllerBlockState('character');
 
-     public function writeModelCode()
-  {   
-          
-         $extModelPath = APPPATH.'models/Characters_model.php';
-        if ( !file_exists( $extModelPath ) ) { 
-        return [];
-        }
-        $ModelFile = file_get_contents( $extModelPath );
-        $pattern = '/public\sfunction\sget_character_name/';
-        if (!preg_match($pattern, $ModelFile)) {
-       $writeFilePath = dirname(__FILE__).'/../character.txt';
-        if ( !file_exists( $writeFilePath ) ) { 
-           return [];
-        }
-        $file = file_get_contents( $writeFilePath );
+		$this->_regions['title'] .= 'Display Name';
+		$this->_regions['content'] = $this->extension['nova_ext_display_name']
+			->view('config', $this->skin, 'admin', $data);
 
-       $contents = file($extModelPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-      $size = count($contents);
-      $contents[$size-1] = "\n".$file;
-      $temp = implode("\n", $contents);
+		Template::assign($this->_regions);
+		Template::render();
+	}
 
-     
-      file_put_contents($extModelPath, $temp);
-         
-         return true;
-        }
-      return false;
-              
+	// ---------- helpers ----------
 
+	private function _flash($result)
+	{
+		$flash = array(
+			'status'  => ($result[0] === 'error') ? 'error' : 'success',
+			'message' => text_output($result[1]),
+		);
 
-  }
+		$this->_regions['flash_message'] = Location::view('flash', $this->skin, 'admin', $flash);
+	}
 
-    public function saveColumn($requiredCharacterFields)
-    {
+	private function _missingColumns()
+	{
+		$prefix = $this->db->dbprefix;
+		$missing = array();
 
-        if (isset($_POST['submit']) && $_POST['submit'] == 'Add')
-        {
-            $attr = isset($_POST['attribute']) ? $_POST['attribute'] : '';
+		$charFields = $this->db->list_fields($prefix.'characters');
+		foreach ($this->required_character_columns as $col) {
+			if ( ! in_array($col, $charFields)) {
+				$missing[] = $col;
+			}
+		}
 
+		return $missing;
+	}
 
-            if (in_array($attr, $requiredCharacterFields['char']) == true)
-            {
-                $table = "characters";
+	private function _columnSql($column)
+	{
+		$defs = array(
+			'display_name' => 'VARCHAR(255) DEFAULT NULL',
+		);
 
-            }
-            if (!empty($table))
-            {
+		if ( ! isset($defs[$column])) {
+			return '';
+		}
 
-                if (!$this
-                    ->db
-                    ->field_exists($attr, $table))
-                {
-                    $sql = $this->getQuery($attr);
-                    if (!empty($sql))
-                    {
-                        $query = $this
-                            ->db
-                            ->query($sql);
+		return 'ALTER TABLE `'.$this->db->dbprefix.'characters` ADD COLUMN `'.$column.'` '.$defs[$column];
+	}
 
-                        if (($key = array_search($attr, $requiredCharacterFields['char'])) !== false)
-                        {
-                            unset($requiredCharacterFields['char'][$key]);
-                        }
+	private function _setupDatabase()
+	{
+		$missing = $this->_missingColumns();
+		$columnsAdded = 0;
 
-                       
-                        $list['char'] = $requiredCharacterFields;
-                      
-                        return $list;
-                    }
-                }
+		foreach ($missing as $column) {
+			$sql = $this->_columnSql($column);
+			if ($sql !== '') {
+				$this->db->query($sql);
+				$columnsAdded++;
+			}
+		}
 
-            }
-        }
+		if ($columnsAdded === 0) {
+			return array('success', 'Database is already fully set up - nothing to add.');
+		}
 
-        return false;
+		return array('success', 'Database setup complete. Added '.$columnsAdded.' column(s).');
+	}
 
-    }
+	private function _saveLabels($configPath)
+	{
+		$json = json_decode(file_get_contents($configPath), true);
 
-    public function config()
-    {    
-         $data['write']=true;
-          Auth::check_access('site/settings');
-        $data['title'] = 'Display Name Setting';
-        $requiredCharacterFields['char'] = ['display_name'];
+		foreach ($json['nova_ext_display_name'] as $key => $field) {
+			if (isset($_POST[$key])) {
+				$json['nova_ext_display_name'][$key]['value'] = $_POST[$key];
+			}
+		}
 
+		file_put_contents($configPath, json_encode($json, JSON_PRETTY_PRINT));
 
+		return array('success', 'Labels updated.');
+	}
 
-       
-        $extModelPath = APPPATH.'models/Characters_model.php';
-         
-        if ( !file_exists( $extModelPath ) ) { 
-        return [];
-        }
-        $file = file_get_contents( $extModelPath );
+	// ---------- model-block writer ----------
 
-         $pattern = '/public\sfunction\sget_character_name/';
-       
-        if (!preg_match($pattern, $file)) {
-           $data['write']=false;
+	private function _blockMap()
+	{
+		return array(
+			'character' => array(
+				'file'   => APPPATH.'models/Characters_model.php',
+				'txt'    => dirname(__FILE__).'/../character.txt',
+				'tag'    => 'character',
+				'method' => 'get_character_name',
+				'label'  => 'Display name model code',
+			),
+		);
+	}
 
-        if(isset($_POST['submit']) && $_POST['submit']=='write')
-        {
-             
-            if($this->writeModelCode())
-            {
-              $data['write']=true;
-                $message = sprintf(
-               lang('flash_success'),
-          // TODO: i18n...
-              'get_character_name Function',
-          lang('actions_added'),
-          ''
-        );
-            }else {
-                    $message = sprintf(
-               lang('flash_failure'),
-          // TODO: i18n...
-              'get_character_name Function',
-          lang('actions_added'),
-          ''
-        );
-            }
-         
+	private function _controllerBlockState($which)
+	{
+		$map = $this->_blockMap();
+		if ( ! isset($map[$which])) {
+			return 'unknown';
+		}
+		$m = $map[$which];
 
-        $flash['status'] = 'success';
-        $flash['message'] = text_output($message);
+		if ( ! file_exists($m['file'])) {
+			return 'missing_file';
+		}
 
-        $this->_regions['flash_message'] = Location::view('flash', $this->skin, 'admin', $flash);
+		$file = file_get_contents($m['file']);
+		$txt  = file_exists($m['txt']) ? file_get_contents($m['txt']) : '';
 
-        }
-        }
+		$installedVersion = $this->_blockVersion($file, $m['tag']);
+		$currentVersion   = $this->_blockVersion($txt,  $m['tag']);
 
-        if ($list = $this->saveColumn($requiredCharacterFields))
-        {
-            $requiredCharacterFields = $list['char'];
-           
-            $message = sprintf(lang('flash_success') ,
-            // TODO: i18n...
-            'Column Added successfully', '', '');
+		if ($installedVersion !== null) {
+			return ($installedVersion === $currentVersion) ? 'current' : 'outdated';
+		}
 
-            $flash['status'] = 'success';
-            $flash['message'] = text_output($message);
+		if (preg_match('/function\s+'.preg_quote($m['method'], '/').'\s*\(/', $file)) {
+			return 'legacy';
+		}
 
-            $this->_regions['flash_message'] = Location::view('flash', $this->skin, 'admin', $flash);
-        }
+		return 'missing';
+	}
 
-        $extConfigFilePath = dirname(__FILE__) . '/../config.json';
+	private function _blockVersion($content, $tag)
+	{
+		if (preg_match('/nova_ext_display_name:'.preg_quote($tag, '/').' v(\d+) START/', $content, $match)) {
+			return (int) $match[1];
+		}
+		return null;
+	}
 
-        if (!file_exists($extConfigFilePath))
-        {
-            return [];
-        }
-        $file = file_get_contents($extConfigFilePath);
-        $data['jsons'] = json_decode($file, true);
+	private function _writeControllerBlock($which)
+	{
+		$map = $this->_blockMap();
+		if ( ! isset($map[$which])) {
+			return array('error', 'Unknown block.');
+		}
+		$m = $map[$which];
 
-        if (isset($_POST['submit']) && $_POST['submit'] == 'Submit')
-        {
+		$state = $this->_controllerBlockState($which);
 
-            $data['jsons']['nova_ext_display_name']['display_name']['value'] = $_POST['display_name'];
+		if ($state === 'current') {
+			return array('success', $m['label'].' is already up to date.');
+		}
+		if ($state === 'missing_file') {
+			return array('error', 'Could not find '.$m['file'].'.');
+		}
 
-           
+		$file = file_get_contents($m['file']);
+		if ( ! file_exists($m['txt'])) {
+			return array('error', 'Cannot find '.basename($m['txt']).' in the extension.');
+		}
+		$block = rtrim(file_get_contents($m['txt']), "\r\n");
 
-            $jsonEncode = json_encode($data['jsons'], JSON_PRETTY_PRINT);
+		if ($state === 'outdated') {
+			$pattern = '/[ \t]*\/\*\s*nova_ext_display_name:'.preg_quote($m['tag'], '/')
+				.' v\d+ START.*?nova_ext_display_name:'.preg_quote($m['tag'], '/').' END\s*\*\//s';
+			$new = preg_replace($pattern, $block, $file, 1, $count);
+			if ($count !== 1) {
+				return array('error', 'Could not locate the managed block in '.basename($m['file']).'. Update by hand per the README.');
+			}
+			$file = $new;
+		} elseif ($state === 'legacy') {
+			$span = $this->_findUnmarkedMethodSpan($file, $m['method']);
+			if ($span === null) {
+				return array('error', 'Could not parse the existing '.$m['method'].'() method in '.basename($m['file']).'. Update by hand per the README.');
+			}
+			$file = substr($file, 0, $span[0]).$block."\n".substr($file, $span[1]);
+		} else {
+			// state === 'missing' - insert before the class's final closing brace
+			$pos = strrpos($file, '}');
+			if ($pos === false) {
+				return array('error', basename($m['file']).' is not in the expected format. Install by hand per the README.');
+			}
+			$file = rtrim(substr($file, 0, $pos))."\n\n".$block."\n}\n";
+		}
 
-            file_put_contents($extConfigFilePath, $jsonEncode);
+		file_put_contents($m['file'], $file);
 
-            $message = sprintf(lang('flash_success') ,
-            // TODO: i18n...
-            'Configuration', lang('actions_updated') , '');
+		return array('success', $m['label'].' updated successfully.');
+	}
 
-            $flash['status'] = 'success';
-            $flash['message'] = text_output($message);
+	/**
+	 * Locate the byte span of an unmarked $methodName declaration in $content.
+	 * Returns array($start, $end) (end exclusive, includes the trailing newline
+	 * if present), or null if the method can't be cleanly located. A minimal
+	 * lexer is used so that braces, comments, and string literals don't fool
+	 * the counter.
+	 */
+	private function _findUnmarkedMethodSpan($content, $methodName)
+	{
+		$len = strlen($content);
+		$state = 'normal';
+		$functionPositions = array();
+		$i = 0;
 
-            $this->_regions['flash_message'] = Location::view('flash', $this->skin, 'admin', $flash);
+		// First pass: collect offsets of the `function` keyword that fall
+		// outside any string or comment.
+		while ($i < $len) {
+			$c = $content[$i];
+			$next = ($i + 1 < $len) ? $content[$i + 1] : '';
 
-        }
+			if ($state === 'normal') {
+				if ($c === "'") { $state = 'single'; $i++; continue; }
+				if ($c === '"') { $state = 'double'; $i++; continue; }
+				if ($c === '/' && $next === '/') { $state = 'line_comment'; $i += 2; continue; }
+				if ($c === '/' && $next === '*') { $state = 'block_comment'; $i += 2; continue; }
+				if ($c === 'f'
+					&& substr($content, $i, 8) === 'function'
+					&& ($i === 0 || ! self::_isIdentChar($content[$i - 1]))
+					&& ($i + 8 >= $len || ! self::_isIdentChar($content[$i + 8]))) {
+					$functionPositions[] = $i;
+					$i += 8;
+					continue;
+				}
+			} elseif ($state === 'single') {
+				if ($c === '\\') { $i += 2; continue; }
+				if ($c === "'") $state = 'normal';
+			} elseif ($state === 'double') {
+				if ($c === '\\') { $i += 2; continue; }
+				if ($c === '"') $state = 'normal';
+			} elseif ($state === 'line_comment') {
+				if ($c === "\n") $state = 'normal';
+			} elseif ($state === 'block_comment') {
+				if ($c === '*' && $next === '/') { $state = 'normal'; $i += 2; continue; }
+			}
+			$i++;
+		}
 
-       
+		foreach ($functionPositions as $fnPos) {
+			$p = $fnPos + 8;
+			while ($p < $len && ctype_space($content[$p])) {
+				$p++;
+			}
+			$nameLen = strlen($methodName);
+			if ($p + $nameLen > $len) continue;
+			if (substr($content, $p, $nameLen) !== $methodName) continue;
+			if ($p + $nameLen < $len && self::_isIdentChar($content[$p + $nameLen])) continue;
 
-    
+			// Walk back through whitespace + visibility modifiers to find the
+			// declaration's true start.
+			$k = $fnPos - 1;
+			while ($k >= 0 && ($content[$k] === ' ' || $content[$k] === "\t")) {
+				$k--;
+			}
+			foreach (array('static', 'final', 'abstract', 'protected', 'public', 'private') as $kw) {
+				$klen = strlen($kw);
+				if ($k - $klen + 1 >= 0
+					&& substr($content, $k - $klen + 1, $klen) === $kw
+					&& ($k - $klen < 0 || ! self::_isIdentChar($content[$k - $klen]))) {
+					$k -= $klen;
+					while ($k >= 0 && ($content[$k] === ' ' || $content[$k] === "\t")) {
+						$k--;
+					}
+				}
+			}
+			$start = $k + 1;
 
-        $charFields = $this
-            ->db
-            ->list_fields('characters');
-       
+			// Walk forward, counting braces (skipping strings/comments) until
+			// the method's matching close brace is found.
+			$q = $p + $nameLen;
+			$bs = 'normal';
+			$depth = 0;
+			$started = false;
+			while ($q < $len) {
+				$c = $content[$q];
+				$next = ($q + 1 < $len) ? $content[$q + 1] : '';
+				if ($bs === 'normal') {
+					if ($c === '{') {
+						$depth++;
+						$started = true;
+					} elseif ($c === '}') {
+						$depth--;
+						if ($started && $depth === 0) {
+							$end = $q + 1;
+							if ($end < $len && $content[$end] === "\n") $end++;
+							return array($start, $end);
+						}
+					} elseif ($c === "'") { $bs = 'single'; $q++; continue; }
+					elseif ($c === '"') { $bs = 'double'; $q++; continue; }
+					elseif ($c === '/' && $next === '/') { $bs = 'line_comment'; $q += 2; continue; }
+					elseif ($c === '/' && $next === '*') { $bs = 'block_comment'; $q += 2; continue; }
+				} elseif ($bs === 'single') {
+					if ($c === '\\') { $q += 2; continue; }
+					if ($c === "'") $bs = 'normal';
+				} elseif ($bs === 'double') {
+					if ($c === '\\') { $q += 2; continue; }
+					if ($c === '"') $bs = 'normal';
+				} elseif ($bs === 'line_comment') {
+					if ($c === "\n") $bs = 'normal';
+				} elseif ($bs === 'block_comment') {
+					if ($c === '*' && $next === '/') { $bs = 'normal'; $q += 2; continue; }
+				}
+				$q++;
+			}
+			return null;
+		}
 
-        $leftFields = [];
-        foreach ($requiredCharacterFields['char'] as $key)
-        {
-            if (in_array($key, $charFields) == false)
-            {
-                $leftFields[] = $key;
-            }
-        }
-       
-        $data['fields'] = $leftFields;
-        $this->_regions['title'] .= 'Display Name Setting';
-        $this->_regions['content'] = $this->extension['nova_ext_display_name']
-            ->view('config', $this->skin, 'admin', $data);
+		return null;
+	}
 
-        Template::assign($this->_regions);
-        Template::render();
-    }
-
+	private static function _isIdentChar($ch)
+	{
+		return ctype_alnum($ch) || $ch === '_';
+	}
 }

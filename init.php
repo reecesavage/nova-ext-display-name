@@ -1,7 +1,8 @@
 <?php 
 
-// check 
-require_once dirname(__FILE__) . '/controllers/Installer.php';
+require_once dirname(__FILE__).'/libraries/Character.php';
+
+require_once dirname(__FILE__).'/controllers/Installer.php';
 $manager = ( new \nova_ext_display_name\Installer() )->install();
 
 require_once dirname(__FILE__).'/events/location_main_join2.php';
